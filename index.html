@@ -11,6 +11,13 @@
    ══════════════════════════════════════ */
 *,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+html {
+  /* 스크롤바 자리를 항상 예약 → 탭 전환 시 콘텐츠 길이가 달라도 폭이 안 바뀜 */
+  scrollbar-gutter: stable;
+  /* 구형 브라우저 fallback: 세로 스크롤바 항상 표시 */
+  overflow-y: scroll;
+}
+
 body {
   font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   background: #f0f2f5;
@@ -266,6 +273,10 @@ body:has(#dark-mode:checked) .more-link { color: #60a5fa; }
    🔀 4. 피드 탭 (CSS-only radio)
    ══════════════════════════════════════ */
 .feed-section > input[type="radio"] { display: none; }
+
+/* 가운데 grid 셀: min-width:0 → 안의 가로 스크롤(스토리)이 컬럼을 밀어내지 않음
+   (grid/flex 아이템의 기본 min-width:auto는 콘텐츠 크기까지 커지므로 0으로 막음) */
+.feed-section { min-width: 0; }
 
 .tab-bar {
   display: flex;
