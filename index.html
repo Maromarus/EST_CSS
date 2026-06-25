@@ -107,6 +107,7 @@ body:has(#dark-mode:checked) .post-text { color: #ccc; }
 body:has(#dark-mode:checked) .detail-box { background: #161b22; color: #e6edf3; }
 body:has(#dark-mode:checked) .detail-content { background: #161b22; }
 body:has(#dark-mode:checked) .detail-comment { background: #21262d; }
+body:has(#dark-mode:checked) .comments-toggle { color: #60a5fa; }
 body:has(#dark-mode:checked) .modal-box { background: #161b22; color: #e6edf3; }
 body:has(#dark-mode:checked) .modal-input,
 body:has(#dark-mode:checked) .modal-textarea { background: #21262d; border-color: #30363d; color: #e6edf3; }
@@ -482,12 +483,13 @@ body:has(#dark-mode:checked) .more-link { color: #60a5fa; }
   gap: 14px;
   padding: 8px 14px;
 }
-.action-button {
+.action-button, .action-share {
   font-size: 1.2rem;
   padding: 3px;
+  color: inherit;
   transition: transform 0.2s, color 0.2s;
 }
-.action-button:hover { transform: scale(1.2); color: #3b82f6; }
+.action-button:hover, .action-share:hover { transform: scale(1.2); color: #3b82f6; }
 .action-share { margin-left: auto; }
 
 /* CSS 좋아요 토글 */
@@ -568,6 +570,8 @@ body:has(#dark-mode:checked) .more-link { color: #60a5fa; }
   grid-template-columns: 1fr 1fr;
   width: 800px;
   max-width: 95vw;
+  /* 높이를 고정 → 댓글을 펼쳐도 모달·이미지가 늘어나지 않음 */
+  height: 540px;
   max-height: 85vh;
   box-shadow: 0 20px 60px rgba(0,0,0,0.25);
 }
@@ -576,12 +580,16 @@ body:has(#dark-mode:checked) .more-link { color: #60a5fa; }
   align-items: center;
   justify-content: center;
   font-size: 5rem;
-  min-height: 300px;
+  /* 그리드 셀 높이를 꽉 채우되, 콘텐츠 때문에 늘어나지 않음 */
+  height: 100%;
+  overflow: hidden;
 }
 .detail-content {
   display: flex;
   flex-direction: column;
-  max-height: 85vh;
+  /* 부모(고정 높이)를 꽉 채움 → 내부 .detail-body가 스크롤 영역이 됨 */
+  height: 100%;
+  min-height: 0; /* flex 자식 overflow 스크롤이 작동하려면 필요 */
   background: #fff;
 }
 .detail-header {
@@ -645,6 +653,29 @@ body:has(#dark-mode:checked) .more-link { color: #60a5fa; }
   background: #e5e7eb;
 }
 .detail-comment-name { font-weight: 700; margin-right: 5px; }
+
+/* 댓글 아코디언 (CSS-only "더보기") */
+.comments-more { display: none; } /* 체크박스 숨김 */
+.comments-extra {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.4s ease;
+}
+.comments-more:checked ~ .comments-extra { max-height: 600px; }
+.comments-toggle {
+  display: inline-block;
+  margin-top: 6px;
+  font-size: 0.82rem;
+  color: #3b82f6;
+  font-weight: 600;
+  cursor: pointer;
+}
+.comments-toggle:hover { text-decoration: underline; }
+/* 펼쳐지면 "더보기" → "접기" 텍스트 전환 */
+.comments-toggle .label-open { display: inline; }
+.comments-toggle .label-close { display: none; }
+.comments-more:checked ~ .comments-toggle .label-open { display: none; }
+.comments-more:checked ~ .comments-toggle .label-close { display: inline; }
 
 /* ══════════════════════════════════════
    ✏️ 8. 새 글 모달 (:target)
@@ -855,8 +886,8 @@ body:has(#dark-mode:checked) .more-link { color: #60a5fa; }
   .feed-section { padding-bottom: 68px; }
   .explore-grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); }
   /* 모달 → 1열 */
-  .detail-box { grid-template-columns: 1fr; width: 95vw; }
-  .detail-image { height: 200px; font-size: 3rem; }
+  .detail-box { grid-template-columns: 1fr; width: 95vw; height: auto; max-height: 90vh; overflow-y: auto; }
+  .detail-image { height: 200px; font-size: 3rem; flex-shrink: 0; }
 }
   </style>
 </head>
@@ -962,8 +993,8 @@ body:has(#dark-mode:checked) .more-link { color: #60a5fa; }
         <div class="post-actions">
           <input type="checkbox" id="like-1" class="like-checkbox">
           <label for="like-1" class="like-label" aria-label="좋아요">♡</label>
-          <button class="action-button" aria-label="댓글">💬</button>
-          <button class="action-button action-share" aria-label="공유">↗</button>
+          <a href="#post-1" class="action-button" aria-label="댓글 보기">💬</a>
+          <a href="#post-1" class="action-button action-share" aria-label="게시글 열기">↗</a>
         </div>
 
         <div class="post-body">
@@ -971,7 +1002,7 @@ body:has(#dark-mode:checked) .more-link { color: #60a5fa; }
           <p class="post-text"><strong>고양이러버</strong> 오늘 우리 냥이가 너무 귀여웠다 🐾 역시 고양이는 사랑이야. 아침에 일어나자마자 얼굴 위에 올라와서 깨웠는데 그 표정이 너무 웃겼음 ㅋㅋㅋ 다음에 영상으로 찍어야지</p>
         </div>
         <a href="#post-1" class="more-link">더 보기</a>
-        <a href="#post-1" class="comment-count-link">💬 댓글 3개 보기</a>
+        <a href="#post-1" class="comment-count-link">💬 댓글 6개 보기</a>
       </article>
 
       <!-- ══ 포스트 2 ══ -->
@@ -990,8 +1021,8 @@ body:has(#dark-mode:checked) .more-link { color: #60a5fa; }
         <figure class="post-image-wrap"><div class="post-image" style="background:linear-gradient(135deg,#a8edea,#fed6e3)" role="img" aria-label="코딩 화면">💻</div></figure>
         <div class="post-actions">
           <input type="checkbox" id="like-2" class="like-checkbox"><label for="like-2" class="like-label" aria-label="좋아요">♡</label>
-          <button class="action-button" aria-label="댓글">💬</button>
-          <button class="action-button action-share" aria-label="공유">↗</button>
+          <a href="#post-2" class="action-button" aria-label="댓글 보기">💬</a>
+          <a href="#post-2" class="action-button action-share" aria-label="게시글 열기">↗</a>
         </div>
         <div class="post-body">
           <p class="post-likes">좋아요 89개</p>
@@ -1017,8 +1048,8 @@ body:has(#dark-mode:checked) .more-link { color: #60a5fa; }
         <figure class="post-image-wrap"><div class="post-image" style="background:linear-gradient(135deg,#43e97b,#38f9d7)" role="img" aria-label="산 풍경">🗻</div></figure>
         <div class="post-actions">
           <input type="checkbox" id="like-3" class="like-checkbox"><label for="like-3" class="like-label" aria-label="좋아요">♡</label>
-          <button class="action-button" aria-label="댓글">💬</button>
-          <button class="action-button action-share" aria-label="공유">↗</button>
+          <a href="#post-3" class="action-button" aria-label="댓글 보기">💬</a>
+          <a href="#post-3" class="action-button action-share" aria-label="게시글 열기">↗</a>
         </div>
         <div class="post-body">
           <p class="post-likes">좋아요 256개</p>
@@ -1096,10 +1127,20 @@ body:has(#dark-mode:checked) .more-link { color: #60a5fa; }
       </header>
       <div class="detail-body">
         <p class="detail-full-text"><strong>고양이러버</strong> 오늘 우리 냥이가 너무 귀여웠다 🐾 역시 고양이는 사랑이야. 아침에 일어나자마자 얼굴 위에 올라와서 깨웠는데 그 표정이 너무 웃겼음 ㅋㅋㅋ 다음에 영상으로 찍어야지. 참고로 이름은 "모찌"입니다 🍡</p>
-        <h3 class="detail-comments-title">💬 댓글 3개</h3>
+        <h3 class="detail-comments-title">💬 댓글 6개</h3>
         <div class="detail-comment"><div class="detail-comment-avatar" aria-hidden="true">🍕</div><p><strong class="detail-comment-name">맛집탐방</strong>너무 귀엽다!! 😍</p></div>
         <div class="detail-comment"><div class="detail-comment-avatar" aria-hidden="true">🎸</div><p><strong class="detail-comment-name">기타개발자</strong>우리 집 강아지도 소개시켜줘</p></div>
-        <div class="detail-comment"><div class="detail-comment-avatar" aria-hidden="true">📚</div><p><strong class="detail-comment-name">독서모임</strong>모찌라니 이름도 귀엽다 😆</p></div>
+        <input type="checkbox" id="more-comments-1" class="comments-more">
+        <div class="comments-extra">
+          <div class="detail-comment"><div class="detail-comment-avatar" aria-hidden="true">📚</div><p><strong class="detail-comment-name">독서모임</strong>모찌라니 이름도 귀엽다 😆</p></div>
+          <div class="detail-comment"><div class="detail-comment-avatar" aria-hidden="true">🏃</div><p><strong class="detail-comment-name">러닝크루</strong>다음 영상 기대할게요!</p></div>
+          <div class="detail-comment"><div class="detail-comment-avatar" aria-hidden="true">🎨</div><p><strong class="detail-comment-name">그림쟁이</strong>저희 집 냥이랑 닮았어요 🐈</p></div>
+          <div class="detail-comment"><div class="detail-comment-avatar" aria-hidden="true">✈️</div><p><strong class="detail-comment-name">여행일기</strong>힐링된다 ☺️</p></div>
+        </div>
+        <label for="more-comments-1" class="comments-toggle">
+          <span class="label-open">댓글 4개 더보기 ▾</span>
+          <span class="label-close">접기 ▴</span>
+        </label>
       </div>
     </div>
   </div>
